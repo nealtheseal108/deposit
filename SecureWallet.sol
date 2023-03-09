@@ -5,46 +5,54 @@ import "hardhat/console.sol";
 contract SecureWallet {
     mapping(address => uint) fundAllocation;
     // could possibly track number of transactions to greet user or similar
+    // ether unit specification functionality
+    // directly send gifts to another user
 
     function receiveFunds() payable external {
-        fundAllocation[msg.sender] = msg.value;
-        console.log("Contract has received %s wei from %s.", msg.value, msg.sender);           
+        fundAllocation[msg.sender] = fundAllocation[msg.sender] + msg.value;
+        console.log("Contract has received %s wei from %s, and the value of %s in this contract is %s wei.", msg.value, msg.sender, msg.sender, getBalanceSender());           
+
     }
 
-    function withdrawFundsToSender(uint funds) external {
-        if (checkFunds(msg.sender, funds)) {
+    function withdrawFundsToSender(uint funds /*, bytes unit*/) external {
+        if (checkFundsSender(funds)) {
+            /* if (unit) */
             payable(msg.sender).transfer(funds);
             fundAllocation[msg.sender] = fundAllocation[msg.sender] - funds;
-            getBalance(msg.sender);
+            getBalanceSender();
         }
     }
 
     function withdrawFundsToExtAddress(address payable _addr, uint funds) external {
-        if (checkFunds(msg.sender, funds)) {
+        if (checkFundsSender(funds)) {
             payable(_addr).transfer(funds);
             fundAllocation[msg.sender] = fundAllocation[msg.sender] - funds;
             getBalance(msg.sender);
         }
     }
 
-    function checkFunds(address _addr, uint funds) view private returns(bool) {
-        if (funds <= fundAllocation[_addr]) {
-            console.log("The address %s is requesting %s wei, and its request will be granted.", _addr, funds);           
+    function getBalance(address _addr) internal view returns (uint) {
+        console.log("%s has a balance of %s wei.", _addr, fundAllocation[_addr]);
+        return fundAllocation[_addr];
+    }
+
+    function getBalanceSender() public view returns (uint) {
+        console.log("You, or %s, have a balance of %s wei.", msg.sender, fundAllocation[msg.sender]);
+        return fundAllocation[msg.sender];
+    }
+
+    function checkFundsSender(uint funds) view private returns(bool) {
+        if (funds <= fundAllocation[msg.sender]) {
+            console.log("The address %s is requesting %s wei, and its request will be granted.", msg.sender, funds);           
             return true; 
         } else {
-             console.log("The address %s is requesting %s wei, and its request will be rejected.", _addr, funds);      
+             console.log("The address %s is requesting %s wei, and its request will be rejected.", msg.sender, funds);      
             return false;
         }
     }
 
-    function getBalanceSender() external view returns (uint) {
-        console.log("The address %s has a balance of %s wei.", msg.sender, fundAllocation[msg.sender]);
-        return fundAllocation[msg.sender];
-    }
-
-    function getBalance(address _addr) private view returns (uint) {
-        console.log("The address %s has a balance of %s wei.", _addr, fundAllocation[_addr]);
-        return fundAllocation[_addr];
+    function bytesEqual(bytes32 a, bytes32 b) private pure returns(bool) {
+        return a == b;
     }
 
     /* function convertToETH (uint _amount) private returns (bytes memory) {
@@ -61,7 +69,6 @@ contract SecureWallet {
                 ethBytes = bytes.concat(ethBytes, (amount / (10**i)));
             }
         } else {
-
         }
     } */
 
@@ -71,4 +78,3 @@ contract SecureWallet {
 // external: only external contracts may access
 // internal: only this contract and sub-contracts may access
 // private only this contracct may access
-
