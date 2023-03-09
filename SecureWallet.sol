@@ -19,11 +19,11 @@ contract SecureWallet {
         }
     }
 
-    function withdrawFundsToExtAddress(address payable _addr, uint funds) external payable  {
-        if (checkFunds(_addr, funds)) {
+    function withdrawFundsToExtAddress(address payable _addr, uint funds) external {
+        if (checkFunds(msg.sender, funds)) {
             payable(_addr).transfer(funds);
-            fundAllocation[_addr] = fundAllocation[_addr] - funds;
-            getBalance(_addr);
+            fundAllocation[msg.sender] = fundAllocation[msg.sender] - funds;
+            getBalance(msg.sender);
         }
     }
 
