@@ -11,7 +11,7 @@ contract SecureWallet {
     }
 
     function withdrawFundsToSender(uint funds, string memory unit) payable external {
-        uint weiFunds = convertUnits(funds, trimLowerCase(bytes(unit)));
+        uint weiFunds = convertUnits(funds, removeSpacesLowerCase(bytes(unit)));
         console.log("weiFunds = %s.", weiFunds);
         if (checkFundsSender(weiFunds)) {
             payable(msg.sender).transfer(weiFunds);
@@ -21,7 +21,7 @@ contract SecureWallet {
     }
 
     function withdrawFundsToExtAddress(address payable _addr, uint funds, string memory unit) payable external {
-        uint weiFunds = convertUnits(funds, trimLowerCase(bytes(unit)));
+        uint weiFunds = convertUnits(funds, removeSpacesLowerCase(bytes(unit)));
         console.log("weiFunds = %s.", weiFunds);
         if (checkFundsSender(weiFunds) && weiFunds != 0) {
             payable(_addr).transfer(weiFunds);
@@ -51,56 +51,28 @@ contract SecureWallet {
     }
     
     function convertUnits(uint funds, bytes memory unit) pure internal returns (uint) {
-        if (bytes32(unit) == "wei") {
+        if (bytes10(unit) == "wei") {
             return funds;
-        } else if (bytes32(unit) == "kwei" || bytes32(unit) == "babbage") {
+        } else if (bytes10(unit) == "kwei" || bytes10(unit) == "babbage") {
             return funds * 1000;
-        } else if (bytes32(unit) == "mwei" || bytes32(unit) == "lovelace" || bytes32(unit) == "ada" || bytes32(unit) == "femto" || bytes32(unit) == "femtoeth" || bytes32(unit) == "femtoether") {
+        } else if (bytes10(unit) == "mwei" || bytes10(unit) == "lovelace" || bytes10(unit) == "ada" || bytes10(unit) == "femto" || bytes10(unit) == "femtoeth" || bytes10(unit) == "femtoether") {
             return funds * 1000000;
-        } else if (bytes32(unit) == "gwei" || bytes32(unit) == "shannon" || bytes32(unit) == "pico" || bytes32(unit) == "picoeth" || bytes32(unit) == "picoether") {
+        } else if (bytes10(unit) == "gwei" || bytes10(unit) == "shannon" || bytes10(unit) == "pico" || bytes10(unit) == "picoeth" || bytes10(unit) == "picoether") {
             return funds * 1000000000;
-        } else if (bytes32(unit) == "micro" || bytes32(unit) == "szabo" || bytes32(unit) == "microeth" || bytes32(unit) == "microether" || bytes32(unit) == "nano" || bytes32(unit) == "nanoeth" || bytes32(unit) == "nanoether") {
+        } else if (bytes10(unit) == "micro" || bytes10(unit) == "szabo" || bytes10(unit) == "microeth" || bytes10(unit) == "microether" || bytes10(unit) == "nano" || bytes10(unit) == "nanoeth" || bytes10(unit) == "nanoether") {
             return funds * 1000000000000;    
-        } else if (bytes32(unit) == "milli" || bytes32(unit) == "finney" || bytes32(unit) == "millieth" || bytes32(unit) == "millether") {
+        } else if (bytes10(unit) == "milli" || bytes10(unit) == "finney" || bytes10(unit) == "millieth" || bytes10(unit) == "millether") {
             return funds * 1000000000000000;       
-        } else if (bytes32(unit) == "ether" || bytes32(unit) == "eth" || bytes32(unit) == "ethereum") {
+        } else if (bytes10(unit) == "ether" || bytes10(unit) == "eth" || bytes10(unit) == "ethereum") {
             return funds * 1000000000000000000;      
         } else {
             return 0;
         }
     }
 
-    
-
-    function trimLowerCase(bytes memory _str) pure internal returns (bytes memory) {
-        bytes memory str = _str;
-        uint firstChar = 0;
-        uint lastChar = 0;
-        uint i = 0;
-        while (uint8(str[i]) != 0x20 && uint8(str[i]) != 0x09 && uint8(str[i]) != 0x0a && uint8(str[i]) != 0x0D && uint8(str[i]) != 0x0B && uint8(str[i]) != 0x00 && i < str.length) {
-            if (uint8(str[i]) == 0x20 || uint8(str[i]) != 0x09 || uint8(str[i]) == 0x0a || uint8(str[i]) == 0x0D || uint8(str[i]) == 0x0B || uint8(str[i]) == 0x00) {
-                firstChar = i;
-                break;
-            }
-            i++;
-        }
-
-        i = str.length - 1;
-
-        do {
-            if (uint8(str[i]) == 0x20 || uint8(str[i]) != 0x09 || uint8(str[i]) == 0x0a || uint8(str[i]) == 0x0D || uint8(str[i]) == 0x0B || uint8(str[i]) == 0x00) {
-                lastChar = i;
-                break;
-            }
-            i--;
-        } while(uint8(str[i]) != 0x20 && uint8(str[i]) != 0x09 && uint8(str[i]) != 0x0a && uint8(str[i]) != 0x0D && uint8(str[i]) != 0x0B && uint8(str[i]) != 0x00 && i > 0);
-
-		return trim(toLowerCase(str));
-	}
-
     function toLowerCase(bytes memory _str) pure internal returns (bytes memory) {
         bytes memory str = _str;
-        for (uint i = 0; i < str.length; i++) {
+        for (uint i = 0; i < str.length; ++i) {
             if (uint8(str[i]) >= 65 && uint8(str[i]) <= 90) {
                 str[i] = bytes1(uint8(str[i]) + 32);  
             }
@@ -108,51 +80,75 @@ contract SecureWallet {
         return str;
     }
 
-    function ltrim(bytes memory _in) pure internal returns (bytes memory) {
-        bytes memory _inArr = _in;
-        uint256 _inArrLen = _inArr.length;
-        uint256 _start;
-        // Find the index of the first non-whitespace character
-        for (uint256 i = 0; i < _inArrLen; ++i) {
-            bytes1 _char = _inArr[i];
-            if (_char != 0x20 && _char != 0x09 && _char != 0x0a && _char != 0x0D && _char != 0x0B && _char != 0x00) {
-                _start = i;
+    function removeSpacesLowerCase(bytes memory _str) pure public returns (bytes memory) {
+        uint spaceCounter = 0;
+        for (uint i = 0; i < _str.length; ++i) {
+            if (uint8(_str[i]) <= 65 || uint8(_str[i]) >= 122) {
+                if (uint8(_str[i]) == 0x20 || uint8(_str[i]) == 0x09 || uint8(_str[i]) == 0x0a || uint8(_str[i]) == 0x0D || uint8(_str[i]) == 0x0B || uint8(_str[i]) == 0x00) {
+                    ++spaceCounter;
+                }
+            }
+        }
+
+        bytes memory output = new bytes(_str.length - spaceCounter);
+        spaceCounter = 0;
+        for (uint i = 0; i < _str.length; ++i) {
+            if (uint8(_str[i]) <= 65 || uint8(_str[i]) >= 122) {
+                if (uint8(_str[i]) == 0x20 || uint8(_str[i]) == 0x09 || uint8(_str[i]) == 0x0a || uint8(_str[i]) == 0x0D || uint8(_str[i]) == 0x0B || uint8(_str[i]) == 0x00) {
+                    // do nothing
+                } else {
+                    output[spaceCounter] = _str[i];
+                    spaceCounter++;
+                }
+            } else {
+                output[spaceCounter] = _str[i];
+                spaceCounter++;
+            }
+        }
+        
+        return toLowerCase(output);
+    }
+    
+    /* function leftTrim(bytes memory _str) pure internal returns (bytes memory) {
+        bytes memory str = _str;
+        uint256 length = str.length;
+        uint256 start;
+        for (uint256 i = 0; i < length; ++i) {
+            bytes1 char = str[i];
+            if (char != 0x20 && char != 0x09 && char != 0x0a && char != 0x0D && char != 0x0B && char != 0x00) {
+                start = i;
                 break;
             }
         }
-        bytes memory _outArr = new bytes(_inArrLen - _start);
-        for (uint256 i = _start; i < _inArrLen; ++i) {
-            _outArr[i - _start] = _inArr[i];
+        bytes memory output = new bytes(length - start);
+        for (uint256 i = start; i < length; ++i) {
+            output[i - start] = str[i];
         }
-        return _outArr;
+        return output;
     }
 
-    function rtrim(bytes memory _in) pure internal returns (bytes memory) {
-        bytes memory _inArr = bytes(_in);
-        uint256 _inArrLen = _inArr.length;
-        uint256 _end;
-        for (uint256 i = _inArrLen - 1; i >= 0; i--) {
-            bytes1 _char = _inArr[i];
-            if (_char != 0x20 && _char != 0x09 && _char != 0x0a && _char != 0x0D && _char != 0x0B && _char != 0x00) {
-                _end = i;
+    function rightTrim(bytes memory _str) pure internal returns (bytes memory) {
+        bytes memory str = bytes(_str);
+        uint256 length = str.length;
+        uint256 end;
+        for (uint256 i = length - 1; i >= 0; --i) {
+            bytes1 char = str[i];
+            if (char != 0x20 && char != 0x09 && char != 0x0a && char != 0x0D && char != 0x0B && char != 0x00) {
+                end = i;
                 break;
             }
         }
         
-        bytes memory _outArr = new bytes(_end + 1);
-        for (uint256 i = 0; i <= _end; ++i) {
-            _outArr[i] = _inArr[i];
+        bytes memory output = new bytes(end + 1);
+        for (uint256 i = 0; i <= end; ++i) {
+            output[i] = str[i];
         }
-        return _outArr;
+        return output;
     }
-
-    function trim(bytes memory _in) internal pure returns (bytes memory) {
-        return ltrim(rtrim(_in));
-    }
-
-    /* function substring(bytes memory _str, uint startIndex, uint endIndex) pure public returns (bytes memory) {
+    
+    function substring(bytes memory _str, uint startIndex, uint endIndex) pure public returns (bytes memory) {
         bytes memory result = new bytes(endIndex - startIndex + 1);
-        for (uint i = startIndex; i <= endIndex; i++) {
+        for (uint i = startIndex; i <= endIndex; ++i) {
             result[i - startIndex] = _str[i];
         }
         return result;
@@ -173,7 +169,32 @@ contract SecureWallet {
             }
         } else {
         }
-    } */
+    } 
+    function trimLowerCase(bytes memory _str) pure public returns (bytes memory) {
+        bytes memory str = _str;
+        uint firstChar = 0;
+        uint lastChar = 0;
+        uint i = 0;
+        while (uint8(str[i]) != 0x20 && uint8(str[i]) != 0x09 && uint8(str[i]) != 0x0a && uint8(str[i]) != 0x0D && uint8(str[i]) != 0x0B && uint8(str[i]) != 0x00 && i < str.length) {
+            if (uint8(str[i]) == 0x20 || uint8(str[i]) == 0x09 || uint8(str[i]) == 0x0a || uint8(str[i]) == 0x0D || uint8(str[i]) == 0x0B || uint8(str[i]) == 0x00) {
+                firstChar = i;
+                break;
+            }
+            ++i;
+        }
+
+        i = str.length - 1;
+
+        do {
+            if (uint8(str[i]) == 0x20 || uint8(str[i]) == 0x09 || uint8(str[i]) == 0x0a || uint8(str[i]) == 0x0D || uint8(str[i]) == 0x0B || uint8(str[i]) == 0x00) {
+                lastChar = i;
+                break;
+            }
+            --i;
+        } while(uint8(str[i]) != 0x20 && uint8(str[i]) != 0x09 && uint8(str[i]) != 0x0a && uint8(str[i]) != 0x0D && uint8(str[i]) != 0x0B && uint8(str[i]) != 0x00 && i > 0);
+
+		return substring(toLowerCase(str), firstChar, lastChar);
+	} */
 
 } 
 
