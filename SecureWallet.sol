@@ -4,67 +4,191 @@ import "hardhat/console.sol";
 
 contract SecureWallet {
     mapping(address => uint) fundAllocation;
+    uint prefUnit = 0;
 
     function receiveFunds() payable external {
         fundAllocation[msg.sender] = fundAllocation[msg.sender] + msg.value;
-        console.log("Contract has received %s wei from your address, or %s; your current balance is %s wei.", msg.value, msg.sender, fundAllocation[msg.sender]);  
+        if (prefUnit <= 1) {
+            console.log("Contract has received %s wei from your address, or %s; your current balance is %s wei.", msg.value, msg.sender, fundAllocation[msg.sender]);
+        } else if (prefUnit == 3) {
+            console.log("Contract has received %s kwei from your address, or %s; your current balance is %s kwei.", msg.value / 1000, msg.sender, fundAllocation[msg.sender] / 1000);
+        } else if (prefUnit == 6) {
+            console.log("Contract has received %s mwei from your address, or %s; your current balance is %s mwei.", msg.value / 1000000, msg.sender, fundAllocation[msg.sender] / 1000000);
+        } else if (prefUnit == 9) {
+            console.log("Contract has received %s gwei from your address, or %s; your current balance is %s gwei.", msg.value / 1000000000, msg.sender, fundAllocation[msg.sender] / 10000000000);
+        } else if (prefUnit == 12) {
+            console.log("Contract has received %s szabo, or microether, from your address, or %s; your current balance is %s szabo.", msg.value / 1000000000000, msg.sender, fundAllocation[msg.sender] / 10000000000000);
+        } else if (prefUnit == 15) {
+            console.log("Contract has received %s finney, or milliether, from your address, or %s; your current balance is %s finney.", msg.value / 1000000000000000, msg.sender, fundAllocation[msg.sender] / 10000000000000000);
+        } else if (prefUnit == 18) {
+            console.log("Contract has received %s ether from your address, or %s; your current balance is %s ether.", msg.value / 1000000000000000000, msg.sender, fundAllocation[msg.sender] / 10000000000000000000);
+        }
+    }
+
+    function setPreferredUnitDisplay(string memory _unit) public returns (uint) {
+        prefUnit = getUnitExponent(bytes(_unit));
+        return prefUnit;
     }
 
     function withdrawFundsToSender(uint funds, string memory unit) payable external {
         uint weiFunds = convertUnits(funds, removeSpacesLowerCase(bytes(unit)));
-        console.log("weiFunds = %s.", weiFunds);
-        if (checkFundsSender(weiFunds)) {
+        uint unitExp = getUnitExponent(bytes(unit));
+        if (checkFundsSender(weiFunds, unitExp)) {
             payable(msg.sender).transfer(weiFunds);
             fundAllocation[msg.sender] = fundAllocation[msg.sender] - weiFunds;
-            getBalanceSender();
+            getBalanceSender(unitExp);
         }
     }
 
     function withdrawFundsToExtAddress(address payable _addr, uint funds, string memory unit) payable external {
         uint weiFunds = convertUnits(funds, removeSpacesLowerCase(bytes(unit)));
-        console.log("weiFunds = %s.", weiFunds);
-        if (checkFundsSender(weiFunds) && weiFunds != 0) {
+        uint unitExp = getUnitExponent(bytes(unit));
+        if (checkFundsSenderExt(weiFunds, unitExp, _addr) && weiFunds != 0) {
             payable(_addr).transfer(weiFunds);
             fundAllocation[msg.sender] = fundAllocation[msg.sender] - weiFunds;
-            getBalanceSender();
+            getBalanceSender(unitExp);
         }
     }
 
-    function getBalance(address _addr) view internal returns (uint) {
-        console.log("%s has a balance of %s wei.", _addr, fundAllocation[_addr]);
-        return fundAllocation[_addr];
-    }
-
-    function getBalanceSender() view internal returns (uint) {
-        console.log("You, or %s, have a balance of %s wei.", msg.sender, fundAllocation[msg.sender]);
+    function getBalanceSender() view public returns (uint) {
+        if (prefUnit <= 1) {
+            console.log("You, or %s, have a balance of %s wei, or %s ether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender]));
+        } else if (prefUnit == 3) {
+            console.log("You, or %s, have a balance of %s wei, or %s kwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000));
+        } else if (prefUnit == 6) {
+            console.log("You, or %s, have a balance of %s wei, or %s mwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000));
+        } else if (prefUnit == 9) {
+            console.log("You, or %s, have a balance of %s wei, or %s gwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000));
+        } else if (prefUnit == 12) {
+            console.log("You, or %s, have a balance of %s wei, or %s szabo, or microether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000));
+        } else if (prefUnit == 15) {
+            console.log("You, or %s, have a balance of %s wei, or %s finney, or milliether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000000));
+        } else if (prefUnit == 18) {
+            console.log("You, or %s, have a balance of %s wei, or %s ether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000000000));
+        }
         return fundAllocation[msg.sender];
     }
 
-    function checkFundsSender(uint funds) view internal returns (bool) {
+    function getBalanceSender(uint unit) view internal returns (uint) {
+        if (unit <= 1) {
+            console.log("You, or %s, have a balance of %s wei.", msg.sender, fundAllocation[msg.sender]);
+        } else if (unit == 3) {
+            console.log("You, or %s, have a balance of %s wei, or %s kwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000));
+        } else if (unit == 6) {
+            console.log("You, or %s, have a balance of %s wei, or %s mwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000));
+        } else if (unit == 9) {
+            console.log("You, or %s, have a balance of %s wei, or %s gwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000));
+        } else if (unit == 12) {
+            console.log("You, or %s, have a balance of %s wei, or %s szabo, or microether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000));
+        } else if (unit == 15) {
+            console.log("You, or %s, have a balance of %s wei, or %s finney, or milliether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000000));
+        } else if (unit == 18) {
+            console.log("You, or %s, have a balance of %s wei, or %s ether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000000000));
+        }
+        return fundAllocation[msg.sender];
+    }
+
+    function checkFundsSender(uint funds, uint unitExp) view internal returns (bool) {
         if (funds <= fundAllocation[msg.sender]) {
-            console.log("The address %s is requesting %s wei, and its request will be granted.", msg.sender, funds);           
+            if (unitExp <= 1) {
+                console.log("The address %s is requesting %s wei, and its request will be granted.", msg.sender, funds);
+            } else if (unitExp == 3) {
+                console.log("The address %s is requesting %s kwei, and its request will be granted.", msg.sender, (funds / 1000));
+            } else if (unitExp == 6) {
+                console.log("The address %s is requesting %s mwei, and its request will be granted.", msg.sender, (funds / 1000000));
+            } else if (unitExp == 9) {
+                console.log("The address %s is requesting %s gwei, and its request will be granted.", msg.sender, (funds / 1000000000));
+            } else if (unitExp == 12) {
+                console.log("The address %s is requesting %s szabo, or microether, and its request will be granted.", msg.sender, (funds / 1000000000000));
+            } else if (unitExp == 15) {
+                console.log("The address %s is requesting %s finney, or milliether, and its request will be granted.", msg.sender, (funds / 1000000000000000));
+            } else if (unitExp == 18) {
+                console.log("The address %s is requesting %s ether, and its request will be granted.", msg.sender, (funds / 1000000000000000000));
+            }
             return true; 
         } else {
-             console.log("The address %s is requesting %s wei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, funds, fundAllocation[msg.sender]);      
+            if (unitExp <= 1) {
+                console.log("The address %s is requesting %s wei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, funds, fundAllocation[msg.sender]);
+            } else if (unitExp == 3) {
+                console.log("The address %s is requesting %s kwei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000), fundAllocation[msg.sender]);
+            } else if (unitExp == 6) {
+                console.log("The address %s is requesting %s mwei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000), fundAllocation[msg.sender]);
+            } else if (unitExp == 9) {
+                console.log("The address %s is requesting %s gwei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000), fundAllocation[msg.sender]);
+            } else if (unitExp == 12) {
+                console.log("The address %s is requesting %s szabo, or microether, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000000), fundAllocation[msg.sender]);
+            } else if (unitExp == 15) {
+                console.log("The address %s is requesting %s finney, or microether, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000000000), fundAllocation[msg.sender]);
+            } else if (unitExp == 18) {
+                console.log("The address %s is requesting %s ether, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000000000000), fundAllocation[msg.sender]);
+            }
             return false;
+        }
+    }
+
+    function checkFundsSenderExt(uint funds, uint unitExp, address _addr) view internal returns (bool) {
+        if (funds <= fundAllocation[msg.sender]) {
+            if (unitExp <= 1) {
+                console.log("You are requesting %s wei to be be sent to %s, and your request will be granted.", funds, _addr);
+            } else if (unitExp == 3) {
+                console.log("You are requesting %s kwei to be be sent to %s, and your request will be granted.", (funds / 1000), _addr);
+            } else if (unitExp == 6) {
+                console.log("You are requesting %s mwei to be be sent to %s, and your request will be granted.", (funds / 1000000), _addr);
+            } else if (unitExp == 9) {
+                console.log("You are requesting %s gwei to be be sent to %s, and your request will be granted.", (funds / 1000000000), _addr);
+            } else if (unitExp == 12) {
+                console.log("You are requesting %s szabo to be be sent to %s, or microether, and your request will be granted.", (funds / 1000000000000), _addr);
+            } else if (unitExp == 15) {
+                console.log("You are requesting %s finney to be be sent to %s, or milliether, and your request will be granted.", (funds / 1000000000000000), _addr);
+            } else if (unitExp == 18) {
+                console.log("You are requesting %s ether, and your request will be granted.", (funds / 1000000000000000000), _addr);
+            }
+            return true; 
+        } else {
+            if (unitExp <= 1) {
+                console.log("You are requesting %s wei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", funds, _addr, fundAllocation[msg.sender]);
+            } else if (unitExp == 3) {
+                console.log("You are requesting %s kwei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000), _addr, fundAllocation[msg.sender]);
+            } else if (unitExp == 6) {
+                console.log("You are requesting %s mwei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000), _addr, fundAllocation[msg.sender]);
+            } else if (unitExp == 9) {
+                console.log("You are requesting %s gwei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000), _addr, fundAllocation[msg.sender]);
+            } else if (unitExp == 12) {
+                console.log("You are requesting %s szabo to be sent to %s, or microether, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000000), _addr, fundAllocation[msg.sender]);
+            } else if (unitExp == 15) {
+                console.log("You are is requesting %s finney, or microether, to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000000000), _addr, fundAllocation[msg.sender]);
+            } else if (unitExp == 18) {
+                console.log("You are is requesting %s ether to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000000000000),_addr, fundAllocation[msg.sender]);
+            }
+            return false;
+        }
+    }
+
+    function getUnitExponent(bytes memory unit) pure internal returns (uint) {
+        bytes10 unitFormatted = bytes10(removeSpacesLowerCase(unit));
+        if (unitFormatted == "wei") {
+            return 0;
+        } else if (unitFormatted == "kwei" || unitFormatted == "babbage") {
+            return 3;
+        } else if (unitFormatted == "mwei" || unitFormatted == "lovelace" || unitFormatted == "ada" || unitFormatted == "femto" || unitFormatted == "femtoeth" || unitFormatted == "femtoether") {
+            return 6;
+        } else if (unitFormatted == "gwei" || unitFormatted == "shannon" || unitFormatted == "pico" || unitFormatted == "picoeth" || unitFormatted == "picoether") {
+            return 9;
+        } else if (unitFormatted == "micro" || unitFormatted == "szabo" || unitFormatted == "microeth" || unitFormatted == "microether" || unitFormatted == "nano" || unitFormatted == "nanoeth" || unitFormatted == "nanoether") {
+            return 12;    
+        } else if (unitFormatted == "milli" || unitFormatted == "finney" || unitFormatted == "millieth" || unitFormatted == "millether") {
+            return 15;       
+        } else if (unitFormatted == "ether" || unitFormatted == "eth" || unitFormatted == "ethereum") {
+            return 18;      
+        } else {
+            return 1;
         }
     }
     
     function convertUnits(uint funds, bytes memory unit) pure internal returns (uint) {
-        if (bytes10(unit) == "wei") {
-            return funds;
-        } else if (bytes10(unit) == "kwei" || bytes10(unit) == "babbage") {
-            return funds * 1000;
-        } else if (bytes10(unit) == "mwei" || bytes10(unit) == "lovelace" || bytes10(unit) == "ada" || bytes10(unit) == "femto" || bytes10(unit) == "femtoeth" || bytes10(unit) == "femtoether") {
-            return funds * 1000000;
-        } else if (bytes10(unit) == "gwei" || bytes10(unit) == "shannon" || bytes10(unit) == "pico" || bytes10(unit) == "picoeth" || bytes10(unit) == "picoether") {
-            return funds * 1000000000;
-        } else if (bytes10(unit) == "micro" || bytes10(unit) == "szabo" || bytes10(unit) == "microeth" || bytes10(unit) == "microether" || bytes10(unit) == "nano" || bytes10(unit) == "nanoeth" || bytes10(unit) == "nanoether") {
-            return funds * 1000000000000;    
-        } else if (bytes10(unit) == "milli" || bytes10(unit) == "finney" || bytes10(unit) == "millieth" || bytes10(unit) == "millether") {
-            return funds * 1000000000000000;       
-        } else if (bytes10(unit) == "ether" || bytes10(unit) == "eth" || bytes10(unit) == "ethereum") {
-            return funds * 1000000000000000000;      
+        uint unitExp = getUnitExponent(unit);
+        if (unitExp != 1) {
+            return funds * (10 ** unitExp);
         } else {
             return 0;
         }
@@ -80,7 +204,7 @@ contract SecureWallet {
         return str;
     }
 
-    function removeSpacesLowerCase(bytes memory _str) pure public returns (bytes memory) {
+    function removeSpacesLowerCase(bytes memory _str) pure internal returns (bytes memory) {
         uint spaceCounter = 0;
         for (uint i = 0; i < _str.length; ++i) {
             if (uint8(_str[i]) <= 65 || uint8(_str[i]) >= 122) {
@@ -108,7 +232,7 @@ contract SecureWallet {
         
         return toLowerCase(output);
     }
-    
+  
     /* function leftTrim(bytes memory _str) pure internal returns (bytes memory) {
         bytes memory str = _str;
         uint256 length = str.length;
@@ -126,7 +250,6 @@ contract SecureWallet {
         }
         return output;
     }
-
     function rightTrim(bytes memory _str) pure internal returns (bytes memory) {
         bytes memory str = bytes(_str);
         uint256 length = str.length;
@@ -144,6 +267,25 @@ contract SecureWallet {
             output[i] = str[i];
         }
         return output;
+    }
+
+    function getBalance(address _addr) view internal returns (uint) {
+        if (prefUnit <= 1) {
+            console.log("%s has a balance of %s wei.", _addr, fundAllocation[_addr]);
+        } else if (prefUnit == 3) {
+            console.log("%s has a balance of %s kwei.", _addr, (fundAllocation[_addr] / 1000));
+        } else if (prefUnit == 6) {
+            console.log("%s has a balance of %s mwei.", _addr, (fundAllocation[_addr] / 1000000));
+        } else if (prefUnit == 9) {
+            console.log("%s has a balance of %s gwei.", _addr, (fundAllocation[_addr] / 1000000000));
+        } else if (prefUnit == 12) {
+            console.log("%s has a balance of %s szabo.", _addr, (fundAllocation[_addr] / 1000000000000));
+        } else if (prefUnit == 15) {
+            console.log("%s has a balance of %s finney.", _addr, (fundAllocation[_addr] / 1000000000000000));
+        } else if (prefUnit == 18) {
+            console.log("%s has a balance of %s ether.", _addr, (fundAllocation[_addr] / 1000000000000000000));
+        }
+        return fundAllocation[_addr];
     }
     
     function substring(bytes memory _str, uint startIndex, uint endIndex) pure public returns (bytes memory) {
@@ -182,9 +324,7 @@ contract SecureWallet {
             }
             ++i;
         }
-
         i = str.length - 1;
-
         do {
             if (uint8(str[i]) == 0x20 || uint8(str[i]) == 0x09 || uint8(str[i]) == 0x0a || uint8(str[i]) == 0x0D || uint8(str[i]) == 0x0B || uint8(str[i]) == 0x00) {
                 lastChar = i;
@@ -192,7 +332,6 @@ contract SecureWallet {
             }
             --i;
         } while(uint8(str[i]) != 0x20 && uint8(str[i]) != 0x09 && uint8(str[i]) != 0x0a && uint8(str[i]) != 0x0D && uint8(str[i]) != 0x0B && uint8(str[i]) != 0x00 && i > 0);
-
 		return substring(toLowerCase(str), firstChar, lastChar);
 	} */
 
