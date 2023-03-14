@@ -1,33 +1,38 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 import "hardhat/console.sol";
 
 contract SecureWallet {
-    mapping(address => uint) fundAllocation;
-    uint prefUnit = 0;
+
+    struct User {
+        mapping(address => uint) fundAllocation;
+        uint prefUnit;
+    }
+
+    User user;
 
     function receiveFunds() payable external {
-        fundAllocation[msg.sender] = fundAllocation[msg.sender] + msg.value;
-        if (prefUnit <= 1) {
-            console.log("Contract has received %s wei from your address, or %s; your current balance is %s wei.", msg.value, msg.sender, fundAllocation[msg.sender]);
-        } else if (prefUnit == 3) {
-            console.log("Contract has received %s kwei from your address, or %s; your current balance is %s kwei.", msg.value / 1000, msg.sender, fundAllocation[msg.sender] / 1000);
-        } else if (prefUnit == 6) {
-            console.log("Contract has received %s mwei from your address, or %s; your current balance is %s mwei.", msg.value / 1000000, msg.sender, fundAllocation[msg.sender] / 1000000);
-        } else if (prefUnit == 9) {
-            console.log("Contract has received %s gwei from your address, or %s; your current balance is %s gwei.", msg.value / 1000000000, msg.sender, fundAllocation[msg.sender] / 10000000000);
-        } else if (prefUnit == 12) {
-            console.log("Contract has received %s szabo, or microether, from your address, or %s; your current balance is %s szabo.", msg.value / 1000000000000, msg.sender, fundAllocation[msg.sender] / 10000000000000);
-        } else if (prefUnit == 15) {
-            console.log("Contract has received %s finney, or milliether, from your address, or %s; your current balance is %s finney.", msg.value / 1000000000000000, msg.sender, fundAllocation[msg.sender] / 10000000000000000);
-        } else if (prefUnit == 18) {
-            console.log("Contract has received %s ether from your address, or %s; your current balance is %s ether.", msg.value / 1000000000000000000, msg.sender, fundAllocation[msg.sender] / 10000000000000000000);
+        user.fundAllocation[msg.sender] = user.fundAllocation[msg.sender] + msg.value;
+        if (user.prefUnit <= 1) {
+            console.log("Contract has received %s wei from your address, or %s; your current balance is %s wei.", msg.value, msg.sender, user.fundAllocation[msg.sender]);
+        } else if (user.prefUnit == 3) {
+            console.log("Contract has received %s kwei from your address, or %s; your current balance is %s kwei.", msg.value / 1000, msg.sender, user.fundAllocation[msg.sender] / 1000);
+        } else if (user.prefUnit == 6) {
+            console.log("Contract has received %s mwei from your address, or %s; your current balance is %s mwei.", msg.value / 1000000, msg.sender, user.fundAllocation[msg.sender] / 1000000);
+        } else if (user.prefUnit == 9) {
+            console.log("Contract has received %s gwei from your address, or %s; your current balance is %s gwei.", msg.value / 1000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000);
+        } else if (user.prefUnit == 12) {
+            console.log("Contract has received %s szabo, or microether, from your address, or %s; your current balance is %s szabo.", msg.value / 1000000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000000);
+        } else if (user.prefUnit == 15) {
+            console.log("Contract has received %s finney, or milliether, from your address, or %s; your current balance is %s finney.", msg.value / 1000000000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000000000);
+        } else if (user.prefUnit == 18) {
+            console.log("Contract has received %s ether from your address, or %s; your current balance is %s ether.", msg.value / 1000000000000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000000000000);
         }
     }
 
     function setPreferredUnitDisplay(string memory _unit) public returns (uint) {
-        prefUnit = getUnitExponent(bytes(_unit));
-        return prefUnit;
+        user.prefUnit = getUnitExponent(bytes(_unit));
+        return user.prefUnit;
     }
 
     function withdrawFundsToSender(uint funds, string memory unit) payable external {
@@ -35,7 +40,7 @@ contract SecureWallet {
         uint unitExp = getUnitExponent(bytes(unit));
         if (checkFundsSender(weiFunds, unitExp)) {
             payable(msg.sender).transfer(weiFunds);
-            fundAllocation[msg.sender] = fundAllocation[msg.sender] - weiFunds;
+            user.fundAllocation[msg.sender] = user.fundAllocation[msg.sender] - weiFunds;
             getBalanceSender(unitExp);
         }
     }
@@ -45,51 +50,51 @@ contract SecureWallet {
         uint unitExp = getUnitExponent(bytes(unit));
         if (checkFundsSenderExt(weiFunds, unitExp, _addr) && weiFunds != 0) {
             payable(_addr).transfer(weiFunds);
-            fundAllocation[msg.sender] = fundAllocation[msg.sender] - weiFunds;
+            user.fundAllocation[msg.sender] = user.fundAllocation[msg.sender] - weiFunds;
             getBalanceSender(unitExp);
         }
     }
 
     function getBalanceSender() view public returns (uint) {
-        if (prefUnit <= 1) {
-            console.log("You, or %s, have a balance of %s wei, or %s ether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender]));
-        } else if (prefUnit == 3) {
-            console.log("You, or %s, have a balance of %s wei, or %s kwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000));
-        } else if (prefUnit == 6) {
-            console.log("You, or %s, have a balance of %s wei, or %s mwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000));
-        } else if (prefUnit == 9) {
-            console.log("You, or %s, have a balance of %s wei, or %s gwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000));
-        } else if (prefUnit == 12) {
-            console.log("You, or %s, have a balance of %s wei, or %s szabo, or microether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000));
-        } else if (prefUnit == 15) {
-            console.log("You, or %s, have a balance of %s wei, or %s finney, or milliether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000000));
-        } else if (prefUnit == 18) {
-            console.log("You, or %s, have a balance of %s wei, or %s ether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000000000));
+        if (user.prefUnit <= 1) {
+            console.log("You, or %s, have a balance of %s wei, or %s ether.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender]));
+        } else if (user.prefUnit == 3) {
+            console.log("You, or %s, have a balance of %s wei, or %s kwei.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000));
+        } else if (user.prefUnit == 6) {
+            console.log("You, or %s, have a balance of %s wei, or %s mwei.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000000));
+        } else if (user.prefUnit == 9) {
+            console.log("You, or %s, have a balance of %s wei, or %s gwei.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000000000));
+        } else if (user.prefUnit == 12) {
+            console.log("You, or %s, have a balance of %s wei, or %s szabo, or microether.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000000000000));
+        } else if (user.prefUnit == 15) {
+            console.log("You, or %s, have a balance of %s wei, or %s finney, or milliether.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000000000000000));
+        } else if (user.prefUnit == 18) {
+            console.log("You, or %s, have a balance of %s wei, or %s ether.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000000000000000000));
         }
-        return fundAllocation[msg.sender];
+        return user.fundAllocation[msg.sender];
     }
 
     function getBalanceSender(uint unit) view internal returns (uint) {
         if (unit <= 1) {
-            console.log("You, or %s, have a balance of %s wei.", msg.sender, fundAllocation[msg.sender]);
+            console.log("You, or %s, have a balance of %s wei.", msg.sender, user.fundAllocation[msg.sender]);
         } else if (unit == 3) {
-            console.log("You, or %s, have a balance of %s wei, or %s kwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000));
+            console.log("You, or %s, have a balance of %s wei, or %s kwei.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000));
         } else if (unit == 6) {
-            console.log("You, or %s, have a balance of %s wei, or %s mwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000));
+            console.log("You, or %s, have a balance of %s wei, or %s mwei.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000000));
         } else if (unit == 9) {
-            console.log("You, or %s, have a balance of %s wei, or %s gwei.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000));
+            console.log("You, or %s, have a balance of %s wei, or %s gwei.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000000000));
         } else if (unit == 12) {
-            console.log("You, or %s, have a balance of %s wei, or %s szabo, or microether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000));
+            console.log("You, or %s, have a balance of %s wei, or %s szabo, or microether.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000000000000));
         } else if (unit == 15) {
-            console.log("You, or %s, have a balance of %s wei, or %s finney, or milliether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000000));
+            console.log("You, or %s, have a balance of %s wei, or %s finney, or milliether.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000000000000000));
         } else if (unit == 18) {
-            console.log("You, or %s, have a balance of %s wei, or %s ether.", msg.sender, fundAllocation[msg.sender], (fundAllocation[msg.sender] / 1000000000000000000));
+            console.log("You, or %s, have a balance of %s wei, or %s ether.", msg.sender, user.fundAllocation[msg.sender], (user.fundAllocation[msg.sender] / 1000000000000000000));
         }
-        return fundAllocation[msg.sender];
+        return user.fundAllocation[msg.sender];
     }
 
     function checkFundsSender(uint funds, uint unitExp) view internal returns (bool) {
-        if (funds <= fundAllocation[msg.sender]) {
+        if (funds <= user.fundAllocation[msg.sender]) {
             if (unitExp <= 1) {
                 console.log("The address %s is requesting %s wei, and its request will be granted.", msg.sender, funds);
             } else if (unitExp == 3) {
@@ -108,26 +113,26 @@ contract SecureWallet {
             return true; 
         } else {
             if (unitExp <= 1) {
-                console.log("The address %s is requesting %s wei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, funds, fundAllocation[msg.sender]);
+                console.log("The address %s is requesting %s wei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, funds, user.fundAllocation[msg.sender]);
             } else if (unitExp == 3) {
-                console.log("The address %s is requesting %s kwei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000), fundAllocation[msg.sender]);
+                console.log("The address %s is requesting %s kwei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000), user.fundAllocation[msg.sender]);
             } else if (unitExp == 6) {
-                console.log("The address %s is requesting %s mwei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000), fundAllocation[msg.sender]);
+                console.log("The address %s is requesting %s mwei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000), user.fundAllocation[msg.sender]);
             } else if (unitExp == 9) {
-                console.log("The address %s is requesting %s gwei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000), fundAllocation[msg.sender]);
+                console.log("The address %s is requesting %s gwei, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000), user.fundAllocation[msg.sender]);
             } else if (unitExp == 12) {
-                console.log("The address %s is requesting %s szabo, or microether, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000000), fundAllocation[msg.sender]);
+                console.log("The address %s is requesting %s szabo, or microether, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000000), user.fundAllocation[msg.sender]);
             } else if (unitExp == 15) {
-                console.log("The address %s is requesting %s finney, or microether, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000000000), fundAllocation[msg.sender]);
+                console.log("The address %s is requesting %s finney, or microether, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000000000), user.fundAllocation[msg.sender]);
             } else if (unitExp == 18) {
-                console.log("The address %s is requesting %s ether, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000000000000), fundAllocation[msg.sender]);
+                console.log("The address %s is requesting %s ether, and its request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", msg.sender, (funds / 1000000000000000000), user.fundAllocation[msg.sender]);
             }
             return false;
         }
     }
 
     function checkFundsSenderExt(uint funds, uint unitExp, address _addr) view internal returns (bool) {
-        if (funds <= fundAllocation[msg.sender]) {
+        if (funds <= user.fundAllocation[msg.sender]) {
             if (unitExp <= 1) {
                 console.log("You are requesting %s wei to be be sent to %s, and your request will be granted.", funds, _addr);
             } else if (unitExp == 3) {
@@ -146,19 +151,19 @@ contract SecureWallet {
             return true; 
         } else {
             if (unitExp <= 1) {
-                console.log("You are requesting %s wei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", funds, _addr, fundAllocation[msg.sender]);
+                console.log("You are requesting %s wei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", funds, _addr, user.fundAllocation[msg.sender]);
             } else if (unitExp == 3) {
-                console.log("You are requesting %s kwei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000), _addr, fundAllocation[msg.sender]);
+                console.log("You are requesting %s kwei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000), _addr, user.fundAllocation[msg.sender]);
             } else if (unitExp == 6) {
-                console.log("You are requesting %s mwei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000), _addr, fundAllocation[msg.sender]);
+                console.log("You are requesting %s mwei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000), _addr, user.fundAllocation[msg.sender]);
             } else if (unitExp == 9) {
-                console.log("You are requesting %s gwei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000), _addr, fundAllocation[msg.sender]);
+                console.log("You are requesting %s gwei to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000), _addr, user.fundAllocation[msg.sender]);
             } else if (unitExp == 12) {
-                console.log("You are requesting %s szabo to be sent to %s, or microether, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000000), _addr, fundAllocation[msg.sender]);
+                console.log("You are requesting %s szabo to be sent to %s, or microether, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000000), _addr, user.fundAllocation[msg.sender]);
             } else if (unitExp == 15) {
-                console.log("You are is requesting %s finney, or microether, to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000000000), _addr, fundAllocation[msg.sender]);
+                console.log("You are is requesting %s finney, or microether, to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000000000), _addr, user.fundAllocation[msg.sender]);
             } else if (unitExp == 18) {
-                console.log("You are is requesting %s ether to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000000000000),_addr, fundAllocation[msg.sender]);
+                console.log("You are is requesting %s ether to be sent to %s, and your request will be rejected, as the amount is greater than the amount the contract can allocate for you, %s wei.", (funds / 1000000000000000000),_addr, user.fundAllocation[msg.sender]);
             }
             return false;
         }
@@ -270,22 +275,22 @@ contract SecureWallet {
     }
 
     function getBalance(address _addr) view internal returns (uint) {
-        if (prefUnit <= 1) {
-            console.log("%s has a balance of %s wei.", _addr, fundAllocation[_addr]);
-        } else if (prefUnit == 3) {
-            console.log("%s has a balance of %s kwei.", _addr, (fundAllocation[_addr] / 1000));
-        } else if (prefUnit == 6) {
-            console.log("%s has a balance of %s mwei.", _addr, (fundAllocation[_addr] / 1000000));
-        } else if (prefUnit == 9) {
-            console.log("%s has a balance of %s gwei.", _addr, (fundAllocation[_addr] / 1000000000));
-        } else if (prefUnit == 12) {
-            console.log("%s has a balance of %s szabo.", _addr, (fundAllocation[_addr] / 1000000000000));
-        } else if (prefUnit == 15) {
-            console.log("%s has a balance of %s finney.", _addr, (fundAllocation[_addr] / 1000000000000000));
-        } else if (prefUnit == 18) {
-            console.log("%s has a balance of %s ether.", _addr, (fundAllocation[_addr] / 1000000000000000000));
+        if (user.prefUnit <= 1) {
+            console.log("%s has a balance of %s wei.", _addr, user.fundAllocation[_addr]);
+        } else if (user.prefUnit == 3) {
+            console.log("%s has a balance of %s kwei.", _addr, (user.fundAllocation[_addr] / 1000));
+        } else if (user.prefUnit == 6) {
+            console.log("%s has a balance of %s mwei.", _addr, (user.fundAllocation[_addr] / 1000000));
+        } else if (user.prefUnit == 9) {
+            console.log("%s has a balance of %s gwei.", _addr, (user.fundAllocation[_addr] / 1000000000));
+        } else if (user.prefUnit == 12) {
+            console.log("%s has a balance of %s szabo.", _addr, (user.fundAllocation[_addr] / 1000000000000));
+        } else if (user.prefUnit == 15) {
+            console.log("%s has a balance of %s finney.", _addr, (user.fundAllocation[_addr] / 1000000000000000));
+        } else if (user.prefUnit == 18) {
+            console.log("%s has a balance of %s ether.", _addr, (user.fundAllocation[_addr] / 1000000000000000000));
         }
-        return fundAllocation[_addr];
+        return user.fundAllocation[_addr];
     }
     
     function substring(bytes memory _str, uint startIndex, uint endIndex) pure public returns (bytes memory) {
