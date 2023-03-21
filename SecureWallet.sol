@@ -16,17 +16,17 @@ contract Deposit {
         if (user.prefUnit <= 1) {
             console.log("Contract has received %s wei from your address; your current balance is %s wei.", msg.value, msg.sender, user.fundAllocation[msg.sender]);
         } else if (user.prefUnit == 3) {
-            console.log("Contract has received %s kwei from your address, or %s wei; your current balance is %s kwei.", msg.value / 1000, msg.sender, user.fundAllocation[msg.sender] / 1000);
+            console.log("Contract has received %s kwei from your address, or %s; your current balance is %s kwei.", msg.value / 1000, msg.sender, user.fundAllocation[msg.sender] / 1000);
         } else if (user.prefUnit == 6) {
-            console.log("Contract has received %s mwei from your address, or %s wei; your current balance is %s mwei.", msg.value / 1000000, msg.sender, user.fundAllocation[msg.sender] / 1000000);
+            console.log("Contract has received %s mwei from your address, or %s; your current balance is %s mwei.", msg.value / 1000000, msg.sender, user.fundAllocation[msg.sender] / 1000000);
         } else if (user.prefUnit == 9) {
-            console.log("Contract has received %s gwei from your address, or %s wei; your current balance is %s gwei.", msg.value / 1000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000);
+            console.log("Contract has received %s gwei from your address, or %s; your current balance is %s gwei.", msg.value / 1000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000);
         } else if (user.prefUnit == 12) {
-            console.log("Contract has received %s szabo, or microether, from your address, or %s wei; your current balance is %s szabo.", msg.value / 1000000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000000);
+            console.log("Contract has received %s szabo, or microether, from your address, or %s; your current balance is %s szabo.", msg.value / 1000000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000000);
         } else if (user.prefUnit == 15) {
-            console.log("Contract has received %s finney, or milliether, from your address, or %s ; your current balance is %s finney.", msg.value / 1000000000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000000000);
+            console.log("Contract has received %s finney, or milliether, from your address, or %s; your current balance is %s finney.", msg.value / 1000000000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000000000);
         } else if (user.prefUnit == 18) {
-            console.log("Contract has received %s ether from your address, or %s wei; your current balance is %s ether.", msg.value / 1000000000000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000000000000);
+            console.log("Contract has received %s ether from your address, or %s; your current balance is %s ether.", msg.value / 1000000000000000000, msg.sender, user.fundAllocation[msg.sender] / 10000000000000000000);
         }
     }
 
@@ -138,13 +138,13 @@ contract Deposit {
             } else if (unitExp == 3) {
                 console.log("You are requesting %s kwei to be be sent to %s, and your request will be granted.", (funds / 1000), _addr);
             } else if (unitExp == 6) {
-                console.log("You are requesting %s mwei to be be sent to %s, and your request will be granted.", (funds / 1000000), _addr);
+                console.log("You are requesting %s mwei to be sent to %s, and your request will be granted.", (funds / 1000000), _addr);
             } else if (unitExp == 9) {
-                console.log("You are requesting %s gwei to be be sent to %s, and your request will be granted.", (funds / 1000000000), _addr);
+                console.log("You are requesting %s gwei to be sent to %s, and your request will be granted.", (funds / 1000000000), _addr);
             } else if (unitExp == 12) {
-                console.log("You are requesting %s szabo to be be sent to %s, or microether, and your request will be granted.", (funds / 1000000000000), _addr);
+                console.log("You are requesting %s szabo to be sent to %s, or microether, and your request will be granted.", (funds / 1000000000000), _addr);
             } else if (unitExp == 15) {
-                console.log("You are requesting %s finney to be be sent to %s, or milliether, and your request will be granted.", (funds / 1000000000000000), _addr);
+                console.log("You are requesting %s finney to be sent to %s, or milliether, and your request will be granted.", (funds / 1000000000000000), _addr);
             } else if (unitExp == 18) {
                 console.log("You are requesting %s ether, and your request will be granted.", (funds / 1000000000000000000), _addr);
             }
@@ -192,11 +192,13 @@ contract Deposit {
     
     function convertUnits(uint funds, bytes memory unit) pure internal returns (uint) {
         uint unitExp = getUnitExponent(unit);
+
         if (unitExp != 1) {
             return funds * (10 ** unitExp);
         } else {
             return 0;
         }
+
     }
 
     function toLowerCase(bytes memory _str) pure internal returns (bytes memory) {
