@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.24;
 import "hardhat/console.sol";
 
 contract Deposit {
@@ -238,108 +238,7 @@ contract Deposit {
         return toLowerCase(output);
     }
   
-    /* function leftTrim(bytes memory _str) pure internal returns (bytes memory) {
-        bytes memory str = _str;
-        uint256 length = str.length;
-        uint256 start;
-        for (uint256 i = 0; i < length; ++i) {
-            bytes1 char = str[i];
-            if (char != 0x20 && char != 0x09 && char != 0x0a && char != 0x0D && char != 0x0B && char != 0x00) {
-                start = i;
-                break;
-            }
-        }
-        bytes memory output = new bytes(length - start);
-        for (uint256 i = start; i < length; ++i) {
-            output[i - start] = str[i];
-        }
-        return output;
-    }
-    function rightTrim(bytes memory _str) pure internal returns (bytes memory) {
-        bytes memory str = bytes(_str);
-        uint256 length = str.length;
-        uint256 end;
-        for (uint256 i = length - 1; i >= 0; --i) {
-            bytes1 char = str[i];
-            if (char != 0x20 && char != 0x09 && char != 0x0a && char != 0x0D && char != 0x0B && char != 0x00) {
-                end = i;
-                break;
-            }
-        }
-        
-        bytes memory output = new bytes(end + 1);
-        for (uint256 i = 0; i <= end; ++i) {
-            output[i] = str[i];
-        }
-        return output;
-    }
-    function getBalance(address _addr) view internal returns (uint) {
-        if (user.prefUnit <= 1) {
-            console.log("%s has a balance of %s wei.", _addr, user.fundAllocation[_addr]);
-        } else if (user.prefUnit == 3) {
-            console.log("%s has a balance of %s kwei.", _addr, (user.fundAllocation[_addr] / 1000));
-        } else if (user.prefUnit == 6) {
-            console.log("%s has a balance of %s mwei.", _addr, (user.fundAllocation[_addr] / 1000000));
-        } else if (user.prefUnit == 9) {
-            console.log("%s has a balance of %s gwei.", _addr, (user.fundAllocation[_addr] / 1000000000));
-        } else if (user.prefUnit == 12) {
-            console.log("%s has a balance of %s szabo.", _addr, (user.fundAllocation[_addr] / 1000000000000));
-        } else if (user.prefUnit == 15) {
-            console.log("%s has a balance of %s finney.", _addr, (user.fundAllocation[_addr] / 1000000000000000));
-        } else if (user.prefUnit == 18) {
-            console.log("%s has a balance of %s ether.", _addr, (user.fundAllocation[_addr] / 1000000000000000000));
-        }
-        return user.fundAllocation[_addr];
-    }
-    
-    function substring(bytes memory _str, uint startIndex, uint endIndex) pure public returns (bytes memory) {
-        bytes memory result = new bytes(endIndex - startIndex + 1);
-        for (uint i = startIndex; i <= endIndex; ++i) {
-            result[i - startIndex] = _str[i];
-        }
-        return result;
-    }
-    
-    function convertToETH (uint _amount) private returns (bytes memory) {
-        bytes memory ethBytes = "";
-        uint amount = _amount;
-        uint numberOfDigits = 0;
-        while (amount > 10) {
-            amount = amount / 10;
-            numberOfDigits++;
-        }
-        amount = _amount;
-        if (numberOfDigits > 18) {
-            for (uint i = numberOfDigits; i >= 1; i--) {
-                ethBytes = bytes.concat(ethBytes, (amount / (10**i)));
-            }
-        } else {
-        }
-    } 
-    function trimLowerCase(bytes memory _str) pure public returns (bytes memory) {
-        bytes memory str = _str;
-        uint firstChar = 0;
-        uint lastChar = 0;
-        uint i = 0;
-        while (uint8(str[i]) != 0x20 && uint8(str[i]) != 0x09 && uint8(str[i]) != 0x0a && uint8(str[i]) != 0x0D && uint8(str[i]) != 0x0B && uint8(str[i]) != 0x00 && i < str.length) {
-            if (uint8(str[i]) == 0x20 || uint8(str[i]) == 0x09 || uint8(str[i]) == 0x0a || uint8(str[i]) == 0x0D || uint8(str[i]) == 0x0B || uint8(str[i]) == 0x00) {
-                firstChar = i;
-                break;
-            }
-            ++i;
-        }
-        i = str.length - 1;
-        do {
-            if (uint8(str[i]) == 0x20 || uint8(str[i]) == 0x09 || uint8(str[i]) == 0x0a || uint8(str[i]) == 0x0D || uint8(str[i]) == 0x0B || uint8(str[i]) == 0x00) {
-                lastChar = i;
-                break;
-            }
-            --i;
-        } while(uint8(str[i]) != 0x20 && uint8(str[i]) != 0x09 && uint8(str[i]) != 0x0a && uint8(str[i]) != 0x0D && uint8(str[i]) != 0x0B && uint8(str[i]) != 0x00 && i > 0);
-		return substring(toLowerCase(str), firstChar, lastChar);
-	} */
-
-} 
+}
 
 // public: all contracts may access
 // external: only external contracts may access
